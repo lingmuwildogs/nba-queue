@@ -1,0 +1,172 @@
+<div class="nba-container">
+  <header class="header">
+    <h1>{{ title() }}</h1>
+  </header>
+
+  @if (!showDraftMode()) {
+    <div class="main-content">
+      <!-- Team 1 -->
+      <div class="team-section team-1">
+        <h2 class="team-name">{{ team1().name }}</h2>
+        <div class="captain-display" *ngIf="team1().captain">
+          <span class="captain-badge">👑 CAPTAIN</span>
+          <span class="captain-name">{{ team1().captain }}</span>
+        </div>
+        
+        <div class="players-grid">
+          @for (player of team1().players; track $index) {
+            <div class="player-card" [class.is-captain-card]="team1().captain === player.name">
+              <div class="player-card-header">
+                <div class="position-badge">{{ player.position }}</div>
+                @if (player.name.trim() !== '') {
+                  <div 
+                    class="captain-icon"
+                    [class.active]="team1().captain === player.name"
+                    (click)="setCaptain(1, $index)"
+                    title="{{ team1().captain === player.name ? 'Captain' : 'Set as Captain' }}"
+                  >
+                    👑
+                  </div>
+                }
+              </div>
+              <input 
+                type="text" 
+                [(ngModel)]="player.name"
+                [placeholder]="'Enter ' + player.position + ' name'"
+                class="player-input"
+              />
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- VS Divider -->
+      <div class="vs-section">
+        <div class="vs-circle">VS</div>
+        <button class="action-btn shuffle-btn" (click)="shuffleTeam(1)">
+          🔀 RESHUFFLE ALL TEAMS
+        </button>
+        <button class="coin-toss-btn" (click)="coinToss()">
+          🪙 COIN TOSS
+        </button>
+        @if (coinTossResult()) {
+          <div class="coin-result">
+            <div class="coin-animation">{{ coinTossResult() }}</div>
+            <div class="winner-text">{{ coinTossWinner() }} WINS!</div>
+          </div>
+        }
+      </div>
+
+      <!-- Team 2 -->
+      <div class="team-section team-2">
+        <h2 class="team-name">{{ team2().name }}</h2>
+        <div class="captain-display" *ngIf="team2().captain">
+          <span class="captain-badge">👑 CAPTAIN</span>
+          <span class="captain-name">{{ team2().captain }}</span>
+        </div>
+        
+        <div class="players-grid">
+          @for (player of team2().players; track $index) {
+            <div class="player-card" [class.is-captain-card]="team2().captain === player.name">
+              <div class="player-card-header">
+                <div class="position-badge">{{ player.position }}</div>
+                @if (player.name.trim() !== '') {
+                  <div 
+                    class="captain-icon"
+                    [class.active]="team2().captain === player.name"
+                    (click)="setCaptain(2, $index)"
+                    title="{{ team2().captain === player.name ? 'Captain' : 'Set as Captain' }}"
+                  >
+                    👑
+                  </div>
+                }
+              </div>
+              <input 
+                type="text" 
+                [(ngModel)]="player.name"
+                [placeholder]="'Enter ' + player.position + ' name'"
+                class="player-input"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <!-- Draft Mode -->
+    <div class="draft-mode">
+      <h2 class="draft-title">🏀 DRAFT MODE</h2>
+      
+      <div class="draft-status">
+        <p class="current-drafter">Current Drafter: <strong>{{ currentDrafter() }}</strong></p>
+        <button class="reset-btn" (click)="resetDraft()">Reset Draft</button>
+      </div>
+
+      <div class="draft-container">
+        <!-- Draft Pool -->
+        <div class="draft-pool">
+          <h3>Available Players ({{ draftPool().length }})</h3>
+          <div class="pool-grid">
+            @for (player of draftPool(); track player) {
+              <div class="draft-player-card" (click)="draftPlayer(player)">
+                <div class="draft-position">{{ player.position }}</div>
+                <div class="draft-name">{{ player.name }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Drafted Teams -->
+        <div class="drafted-teams">
+          <div class="drafted-team">
+            <h3>{{ team1().name }} ({{ draftedTeam1().length }})</h3>
+            @for (player of draftedTeam1(); track player) {
+              <div class="drafted-player">
+                <span class="pos">{{ player.position }}</span>
+                <span class="name">{{ player.name }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="drafted-team">
+            <h3>{{ team2().name }} ({{ draftedTeam2().length }})</h3>
+            @for (player of draftedTeam2(); track player) {
+              <div class="drafted-player">
+                <span class="pos">{{ player.position }}</span>
+                <span class="name">{{ player.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+  
+  <!-- Modal -->
+  @if (showModal()) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ modalTitle() }}</h2>
+        </div>
+        <div class="modal-body">
+          <p>{{ modalMessage() }}</p>
+        </div>
+        <div class="modal-footer">
+          @if (modalType() === 'confirm') {
+            <button class="modal-btn modal-btn-secondary" (click)="closeModal()">
+              Cancel
+            </button>
+            <button class="modal-btn modal-btn-primary" (click)="confirmModal()">
+              Confirm
+            </button>
+          } @else {
+            <button class="modal-btn modal-btn-primary" (click)="closeModal()">
+              OK
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
