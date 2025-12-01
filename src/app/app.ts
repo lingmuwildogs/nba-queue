@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DiscordService } from './services/discord.service';
 
 interface Player {
   name: string;
@@ -20,6 +21,8 @@ interface Team {
   styleUrl: './app.scss'
 })
 export class App {
+  constructor(private discordService: DiscordService) {}
+
   protected readonly title = signal('NBA 2K QUEUEING SYSTEM');
   
   positions = ['PG', 'SG', 'SF', 'PF', 'CENTER'];
@@ -301,13 +304,114 @@ export class App {
     this.showModal.set(false);
     this.modalCallback.set(null);
   }
-  
+
   confirmModal() {
     const callback = this.modalCallback();
     if (callback) {
       callback();
     }
     this.closeModal();
+  }
+
+  isTeamsAvailable(): boolean {
+    const team1 = this.team1();
+    const team2 = this.team2();
+    const team1HasPlayers = team1.players.some(p => p.name.trim() !== '');
+    const team2HasPlayers = team2.players.some(p => p.name.trim() !== '');
+    return team1HasPlayers && team2HasPlayers;
+  }
+
+  sendToDiscord() {
+    const team1 = this.team1();
+    const team2 = this.team2();
+    
+    const embed = {
+      title: '🏀 NBA 2K TEAM LINEUP',
+      color: 16711680, // Red
+      fields: [
+        {
+          name: `🔴 ${team1.name}`,
+          value: this.formatTeamForDiscord(team1),
+          inline: false
+        },
+        {
+          name: `🔵 ${team2.name}`,
+          value: this.formatTeamForDiscord(team2),
+          inline: false
+        }
+      ],
+      timestamp: new Date().toISOString()
+    };
+
+    this.discordService.sendEmbed(embed).subscribe({
+      next: () => {
+        this.showAlert('Success!', '✅ Teams sent to Discord!');
+      },
+      error: (err) => {
+        console.error('Discord error:', err);
+        this.showAlert('Error', '❌ Failed to send to Discord. Check console.');
+      }
+    });
+  }
+
+  formatTeamForDiscord(team: Team): string {
+    let text = '';
+    if (team.captain) {
+      text += `**👑 Captain:** ${team.captain}\n`;
+    }
+    text += '```\n';
+    team.players.forEach(player => {
+      if (player.name.trim()) {
+        text += `${player.position.padEnd(8)} │ ${player.name}\n`;
+      }
+    });
+    text += '```';
+    return text;
+  }
+
+  sendToDiscordDraft() {
+    const team1Name = this.team1().name;
+    const team2Name = this.team2().name;
+    
+    const embed = {
+      title: '🏀 NBA 2K DRAFTED TEAMS',
+      color: 16711680, // Red
+      fields: [
+        {
+          name: `🔴 ${team1Name}`,
+          value: this.formatDraftedTeamForDiscord(this.draftedTeam1()),
+          inline: false
+        },
+        {
+          name: `🔵 ${team2Name}`,
+          value: this.formatDraftedTeamForDiscord(this.draftedTeam2()),
+          inline: false
+        }
+      ],
+      timestamp: new Date().toISOString()
+    };
+
+    this.discordService.sendEmbed(embed).subscribe({
+      next: () => {
+        this.showAlert('Success!', '✅ Drafted teams sent to Discord!');
+      },
+      error: (err) => {
+        console.error('Discord error:', err);
+        this.showAlert('Error', '❌ Failed to send to Discord. Check console.');
+      }
+    });
+  }
+
+  formatDraftedTeamForDiscord(players: Player[]): string {
+    if (players.length === 0) {
+      return '```\nNo players drafted yet\n```';
+    }
+    let text = '```\n';
+    players.forEach(player => {
+      text += `${player.position.padEnd(8)} │ ${player.name}\n`;
+    });
+    text += '```';
+    return text;
   }
   
   exportTeamsToClipboard() {

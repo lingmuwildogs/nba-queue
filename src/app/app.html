@@ -58,6 +58,12 @@
             <span class="btn-icon">📋</span>
             <span class="btn-text">EXPORT</span>
           </button>
+          @if (isTeamsAvailable()) {
+            <button class="action-btn discord-btn" (click)="sendToDiscord()" title="Send teams to Discord">
+              <span class="btn-icon">💬</span>
+              <span class="btn-text">SEND TO DISCORD</span>
+            </button>
+          }
           <button class="coin-toss-btn" (click)="coinToss()" title="Flip a coin to determine draft order">
             <span class="btn-icon">🪙</span>
             <span class="btn-text">COIN TOSS</span>
@@ -120,6 +126,10 @@
             <button class="export-draft-btn" (click)="exportTeamsToClipboard()" title="Copy drafted teams to clipboard">
               <span class="btn-icon">📋</span>
               <span class="btn-text">EXPORT</span>
+            </button>
+            <button class="discord-draft-btn" (click)="sendToDiscordDraft()" title="Send drafted teams to Discord">
+              <span class="btn-icon">💬</span>
+              <span class="btn-text">SEND TO DISCORD</span>
             </button>
             <button class="reset-btn" (click)="resetDraft()" title="Exit draft mode and return to team setup">
               <span class="btn-icon">🔙</span>
