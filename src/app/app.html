@@ -1,13 +1,19 @@
 <div class="nba-container">
   <header class="header">
-    <h1>{{ title() }}</h1>
+    <div class="header-content">
+      <h1>{{ title() }}</h1>
+      <p class="header-subtitle">Build Your Dream Team 🏆</p>
+    </div>
   </header>
 
   @if (!showDraftMode()) {
     <div class="main-content">
       <!-- Team 1 -->
       <div class="team-section team-1">
-        <h2 class="team-name">{{ team1().name }}</h2>
+        <div class="team-header">
+          <div class="team-icon">🔴</div>
+          <h2 class="team-name">{{ team1().name }}</h2>
+        </div>
         <div class="captain-display" *ngIf="team1().captain">
           <span class="captain-badge">👑 CAPTAIN</span>
           <span class="captain-name">{{ team1().captain }}</span>
@@ -43,23 +49,34 @@
       <!-- VS Divider -->
       <div class="vs-section">
         <div class="vs-circle">VS</div>
-        <button class="action-btn shuffle-btn" (click)="shuffleTeam(1)">
-          🔀 RESHUFFLE ALL TEAMS
-        </button>
-        <button class="coin-toss-btn" (click)="coinToss()">
-          🪙 COIN TOSS
-        </button>
+        <div class="button-group">
+          <button class="action-btn shuffle-btn" (click)="shuffleTeam(1)" title="Randomly shuffle all players between teams">
+            <span class="btn-icon">🔀</span>
+            <span class="btn-text">RESHUFFLE</span>
+          </button>
+          <button class="action-btn export-btn" (click)="exportTeamsToClipboard()" title="Copy teams to clipboard for Discord">
+            <span class="btn-icon">📋</span>
+            <span class="btn-text">EXPORT</span>
+          </button>
+          <button class="coin-toss-btn" (click)="coinToss()" title="Flip a coin to determine draft order">
+            <span class="btn-icon">🪙</span>
+            <span class="btn-text">COIN TOSS</span>
+          </button>
+        </div>
         @if (coinTossResult()) {
           <div class="coin-result">
             <div class="coin-animation">{{ coinTossResult() }}</div>
-            <div class="winner-text">{{ coinTossWinner() }} WINS!</div>
+            <div class="winner-text">{{ coinTossWinner() }} gets first pick!</div>
           </div>
         }
       </div>
 
       <!-- Team 2 -->
       <div class="team-section team-2">
-        <h2 class="team-name">{{ team2().name }}</h2>
+        <div class="team-header">
+          <div class="team-icon">🔵</div>
+          <h2 class="team-name">{{ team2().name }}</h2>
+        </div>
         <div class="captain-display" *ngIf="team2().captain">
           <span class="captain-badge">👑 CAPTAIN</span>
           <span class="captain-name">{{ team2().captain }}</span>
@@ -95,47 +112,88 @@
   } @else {
     <!-- Draft Mode -->
     <div class="draft-mode">
-      <h2 class="draft-title">🏀 DRAFT MODE</h2>
-      
-      <div class="draft-status">
-        <p class="current-drafter">Current Drafter: <strong>{{ currentDrafter() }}</strong></p>
-        <button class="reset-btn" (click)="resetDraft()">Reset Draft</button>
-      </div>
-
-      <div class="draft-container">
-        <!-- Draft Pool -->
-        <div class="draft-pool">
-          <h3>Available Players ({{ draftPool().length }})</h3>
-          <div class="pool-grid">
-            @for (player of draftPool(); track player) {
-              <div class="draft-player-card" (click)="draftPlayer(player)">
-                <div class="draft-position">{{ player.position }}</div>
-                <div class="draft-name">{{ player.name }}</div>
-              </div>
-            }
+      <div class="draft-wrapper">
+        <!-- Header -->
+        <div class="draft-header-section">
+          <div class="draft-title-bar">
+            <h2 class="draft-title">🏀 DRAFT MODE</h2>
+            <button class="export-draft-btn" (click)="exportTeamsToClipboard()" title="Copy drafted teams to clipboard">
+              <span class="btn-icon">📋</span>
+              <span class="btn-text">EXPORT</span>
+            </button>
+            <button class="reset-btn" (click)="resetDraft()" title="Exit draft mode and return to team setup">
+              <span class="btn-icon">🔙</span>
+              <span class="btn-text">EXIT DRAFT</span>
+            </button>
           </div>
         </div>
 
-        <!-- Drafted Teams -->
-        <div class="drafted-teams">
-          <div class="drafted-team">
-            <h3>{{ team1().name }} ({{ draftedTeam1().length }})</h3>
-            @for (player of draftedTeam1(); track player) {
-              <div class="drafted-player">
-                <span class="pos">{{ player.position }}</span>
-                <span class="name">{{ player.name }}</span>
-              </div>
-            }
+        <!-- Main Draft Area -->
+        <div class="draft-main">
+          <!-- Left: Team 1 -->
+          <div class="draft-team-section team-1-draft-section">
+            <div class="draft-team-header">
+              <div class="team-icon">🔴</div>
+              <h3>{{ team1().name }}</h3>
+              <div class="player-count-badge">{{ draftedTeam1().length }}/5</div>
+            </div>
+            <div class="draft-team-roster">
+              @for (player of draftedTeam1(); track player) {
+                <div class="drafted-player-item">
+                  <div class="player-position-box">{{ player.position }}</div>
+                  <div class="player-name-text">{{ player.name }}</div>
+                </div>
+              }
+              @if (draftedTeam1().length === 0) {
+                <div class="empty-roster">Waiting for picks...</div>
+              }
+            </div>
           </div>
 
-          <div class="drafted-team">
-            <h3>{{ team2().name }} ({{ draftedTeam2().length }})</h3>
-            @for (player of draftedTeam2(); track player) {
-              <div class="drafted-player">
-                <span class="pos">{{ player.position }}</span>
-                <span class="name">{{ player.name }}</span>
+          <!-- Center: Pool & Current Drafter -->
+          <div class="draft-center">
+            <!-- Current Drafter -->
+            <div class="current-drafter-card">
+              <span class="drafter-label">Currently Picking:</span>
+              <span class="drafter-team">{{ currentDrafter() }}</span>
+            </div>
+
+            <!-- Draft Pool -->
+            <div class="draft-pool-section">
+              <div class="pool-title-bar">
+                <h3>Available Players</h3>
+                <span class="pool-count">{{ draftPool().length }} left</span>
               </div>
-            }
+              <div class="pool-grid">
+                @for (player of draftPool(); track player) {
+                  <button class="draft-player-card" (click)="draftPlayer(player)" [title]="'Draft ' + player.name + ' (' + player.position + ')'">
+                    <div class="card-position">{{ player.position }}</div>
+                    <div class="card-name">{{ player.name }}</div>
+                    <div class="card-hover-text">TAP TO DRAFT</div>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Team 2 -->
+          <div class="draft-team-section team-2-draft-section">
+            <div class="draft-team-header">
+              <div class="team-icon">🔵</div>
+              <h3>{{ team2().name }}</h3>
+              <div class="player-count-badge">{{ draftedTeam2().length }}/5</div>
+            </div>
+            <div class="draft-team-roster">
+              @for (player of draftedTeam2(); track player) {
+                <div class="drafted-player-item">
+                  <div class="player-position-box">{{ player.position }}</div>
+                  <div class="player-name-text">{{ player.name }}</div>
+                </div>
+              }
+              @if (draftedTeam2().length === 0) {
+                <div class="empty-roster">Waiting for picks...</div>
+              }
+            </div>
           </div>
         </div>
       </div>

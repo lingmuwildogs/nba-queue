@@ -215,20 +215,61 @@ export class App {
       return;
     }
     
-    const pool = this.draftPool();
+    let pool = this.draftPool();
     const newPool = pool.filter(p => p !== player);
-    this.draftPool.set(newPool);
+    
+    // Auto-pair: Find the other player with the same position and automatically add to opposing team
+    let playerToDraft = player;
+    let autoDraftedPlayer: Player | null = null;
+    
+    // Find the other player with the same position
+    const otherPlayerSamePosition = newPool.find(p => p.position === player.position);
+    
+    if (otherPlayerSamePosition) {
+      // Check if opposing team already has this position filled
+      const opposingTeam = this.currentDrafter() === this.team1().name 
+        ? this.draftedTeam2() 
+        : this.draftedTeam1();
+      
+      const opposingTeamHasPosition = opposingTeam.some(p => p.position === player.position);
+      
+      if (!opposingTeamHasPosition) {
+        autoDraftedPlayer = otherPlayerSamePosition;
+        // Remove the auto-drafted player from the pool
+        pool = newPool.filter(p => p !== otherPlayerSamePosition);
+      } else {
+        pool = newPool;
+      }
+    } else {
+      pool = newPool;
+    }
+    
+    this.draftPool.set(pool);
     
     if (this.currentDrafter() === this.team1().name) {
-      this.draftedTeam1.set([...this.draftedTeam1(), player]);
+      this.draftedTeam1.set([...this.draftedTeam1(), playerToDraft]);
+      
+      // If we auto-drafted a player, add it to team 2
+      if (autoDraftedPlayer) {
+        this.draftedTeam2.set([...this.draftedTeam2(), autoDraftedPlayer]);
+      }
+      
       this.currentDrafter.set(this.team2().name);
     } else {
-      this.draftedTeam2.set([...this.draftedTeam2(), player]);
+      this.draftedTeam2.set([...this.draftedTeam2(), playerToDraft]);
+      
+      // If we auto-drafted a player, add it to team 1
+      if (autoDraftedPlayer) {
+        this.draftedTeam1.set([...this.draftedTeam1(), autoDraftedPlayer]);
+      }
+      
       this.currentDrafter.set(this.team1().name);
     }
     
-    if (newPool.length === 0) {
+    if (pool.length === 0) {
       this.showAlert('Draft Complete', 'All players have been drafted!');
+    } else if (autoDraftedPlayer) {
+      this.showAlert('Position Auto-Draft', `${autoDraftedPlayer.name} (${autoDraftedPlayer.position}) automatically drafted to the opposing team!`);
     }
   }
   
@@ -267,5 +308,41 @@ export class App {
       callback();
     }
     this.closeModal();
+  }
+  
+  exportTeamsToClipboard() {
+    const team1 = this.team1();
+    const team2 = this.team2();
+    
+    let text = `🏀 NBA 2K TEAMS\n`;
+    text += `═══════════════════════════\n\n`;
+    
+    text += `🔴 ${team1.name}\n`;
+    text += `${team1.captain ? `👑 Captain: ${team1.captain}\n` : ''}`;
+    text += `─────────────────────────────\n`;
+    team1.players.forEach(player => {
+      if (player.name.trim()) {
+        text += `${player.position.padEnd(8)} │ ${player.name}\n`;
+      }
+    });
+    
+    text += `\n🔵 ${team2.name}\n`;
+    text += `${team2.captain ? `👑 Captain: ${team2.captain}\n` : ''}`;
+    text += `─────────────────────────────\n`;
+    team2.players.forEach(player => {
+      if (player.name.trim()) {
+        text += `${player.position.padEnd(8)} │ ${player.name}\n`;
+      }
+    });
+    
+    text += `\n═══════════════════════════`;
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(text).then(() => {
+      this.showAlert('Copied!', 'Team selection copied to clipboard! 🎉');
+    }).catch(err => {
+      this.showAlert('Error', 'Failed to copy to clipboard');
+      console.error('Clipboard error:', err);
+    });
   }
 }

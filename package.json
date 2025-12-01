@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "deploy": "ng build --configuration production --base-href=/nba-app/ && npx angular-cli-ghpages --dir=dist/nba-app/browser"
+    "deploy": "ng build --configuration production --base-href=/nba-queue/ && npx angular-cli-ghpages --dir=dist/nba-app/browser"
   },
   "prettier": {
     "printWidth": 100,
